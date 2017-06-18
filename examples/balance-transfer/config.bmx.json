@@ -1,11 +1,11 @@
 {
    "chainName":"fabric-client1",
-   "chaincodeID":"mycc0",
-   "chaincodeVersion": "11.0",
+   "chaincodeID":"mycc20",
+   "chaincodeVersion": "20.0",
    "channelID":"mychannel",
    "goPath":"../../test/fixtures",
    "chaincodePath":"github.com/example_cc",
-   "keyValueStore":"/tmp/fabric-client-kvs",
+   "keyValueStore":"/tmp/fabric-client-kvs-bmx",
    "mspId": "PeerOrg1",
    "waitTime":"60000",
    "caserver":{

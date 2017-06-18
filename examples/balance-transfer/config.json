@@ -5,7 +5,7 @@
    "channelID":"mychannel",
    "goPath":"../../test/fixtures",
    "chaincodePath":"github.com/example_cc",
-   "keyValueStore":"/tmp/fabric-client-kvs",
+   "keyValueStore":"/tmp/fabric-client-kvs-local",
    "mspId": "Org1MSP",
    "waitTime":"30000",
    "caserver":{
