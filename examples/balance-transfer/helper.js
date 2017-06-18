@@ -61,7 +61,7 @@ module.exports.getSubmitter = function(client) {
 			}
 		});
 };
-module.exports.processProposal = function(tx_id, eventhub, chain, results, proposalType) {
+module.exports.processProposal = function(tx_id, eventhubs, chain, results, proposalType) {
 	var proposalResponses = results[0];
 	//logger.debug('deploy proposalResponses:'+JSON.stringify(proposalResponses));
 	var proposal = results[1];
@@ -97,19 +97,30 @@ module.exports.processProposal = function(tx_id, eventhub, chain, results, propo
 		// if the transaction did not get committed within the timeout period,
 		// fail the test
 		var deployId = tx_id.toString();
-		var txPromise = new Promise((resolve, reject) => {
-			var handle = setTimeout(reject, config.waitTime);
-
-			eventhub.registerTxEvent(deployId, (tx) => {
-				logger.info('The chaincode'+(proposalType == 'deploy' ? proposalType: '')+' transaction has been successfully committed');
-				clearTimeout(handle);
-				eventhub.unregisterTxEvent(deployId);
-				resolve();
+		let eventPromises = [];
+		eventhubs.forEach((eventhub) => {
+			let txPromise = new Promise((resolve, reject) => {
+				let handle = setTimeout(reject, 60000);
+				eventhub.registerTxEvent(deployId.toString(), (tx, code) => {
+					logger.info('The chaincode instantiate transaction has been committed on peer '+ eventhub.ep._endpoint.addr);
+					clearTimeout(handle);
+					eventhub.unregisterTxEvent(deployId);
+					if (code !== 'VALID') {
+						logger.error('The chaincode instantiate transaction was invalid, code = ' + code);
+						reject();
+					} else {
+						logger.info('The chaincode instantiate transaction was valid.');
+						resolve();
+					}
+				});
 			});
+			eventPromises.push(txPromise);
 		});
 
+		logger.info('Sending transaction...');
+
 		var sendPromise = chain.sendTransaction(request);
-		return Promise.all([sendPromise, txPromise]).then((results) => {
+		return Promise.all([sendPromise].concat(eventPromises)).then((results) => {
 			return results[0]; // the first returned value is from the 'sendPromise' which is from the 'sendTransaction()' call
 		}).catch((err) => {
 			logger.error('Failed to send transaction and get notifications within the timeout period. ' + err.stack ? err.stack : err);

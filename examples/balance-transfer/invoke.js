@@ -33,20 +33,70 @@ logger.setLevel('DEBUG');
 
 var client = new hfc();
 var chain;
-var eventhub;
 var tx_id = null;
 var adminUser  = null;
+var eventhubs = [];
+
+// on process exit, always disconnect the event hub
+process.on('exit', function() {
+	for(let key in eventhubs) {
+		let eventhub = eventhubs[key];
+		if (eventhub && eventhub.isconnected()) {
+			logger.debug('Disconnecting the event hub: '+ eventhub);
+			eventhub.disconnect();
+		}
+	}
+});
+
 
 init();
 
 function init() {
 	chain = client.newChain(config.channelID);
-	chain.addOrderer(new Orderer(config.orderer.orderer_url));
-	eventhub = new EventHub();
-	eventhub.setPeerAddr(config.events[0].event_url);
-	eventhub.connect();
-	for (var i = 0; i < config.peers.length; i++) {
-		chain.addPeer(new Peer(config.peers[i].peer_url));
+	let pem = null;
+
+	if('tlsCert' in config) {
+		pem = config.tlsCert.pem;
+	}
+
+	let orderer;
+	if(pem){
+		orderer = new Orderer(config.orderer.orderer_url,
+			{
+				pem: pem
+			});
+	} else {
+		orderer = new Orderer(config.orderer.orderer_url);
+	}
+
+	chain.addOrderer(orderer);
+
+	for (let i = 0; i < config.peers.length; i++) {
+		let peer;
+		if(pem){
+			peer = new Peer(config.peers[i].peer_url,
+				{
+					pem: pem
+				});
+		} else {
+			peer = new Peer(config.peers[i].peer_url);
+		}
+		chain.addPeer(peer);
+	}
+
+	for (let i = 0; i < config.events.length; i++) {
+		let eventhub = new EventHub();
+
+		if(pem){
+			eventhub.setPeerAddr(config.events[i].event_url,
+			{
+				pem: pem
+			});
+		} else {
+			eventhub.setPeerAddr(config.events[i].event_url);
+		}
+		eventhub.connect();
+		eventhubs.push(eventhub);
 	}
 }
 
@@ -57,9 +107,10 @@ hfc.newDefaultKeyValueStore({
 	return helper.getSubmitter(client);
 }).then(
 	function(admin) {
-		logger.info('Successfully obtained user to submit transaction');
 		adminUser = admin;
-		chain.initialize();
+		logger.info('Successfully obtained enrolled user to deploy the chaincode');
+		return chain.initialize();
+	}).then(function () {
 		logger.info('Executing Invoke');
 		var nonce = utils.getNonce();
 		tx_id = chain.buildTransactionID(nonce, adminUser);
@@ -79,7 +130,7 @@ hfc.newDefaultKeyValueStore({
 	function(results) {
 		logger.info('Successfully obtained proposal responses from endorsers');
 
-		return helper.processProposal(tx_id, eventhub, chain, results, 'move');
+		return helper.processProposal(tx_id, eventhubs, chain, results, 'move');
 	}
 ).then(
 	function(response) {
@@ -90,7 +141,7 @@ hfc.newDefaultKeyValueStore({
 	}
 ).catch(
 	function(err) {
-		eventhub.disconnect();
 		logger.error('Failed to invoke transaction due to error: ' + err.stack ? err.stack : err);
+		process.exit();
 	}
 );

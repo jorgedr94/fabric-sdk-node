@@ -31,14 +31,40 @@ var helper = require('./helper.js');
 
 var client = new hfc();
 var chain;
+var adminUser;
 
 init();
 
 function init() {
 	chain = client.newChain(config.channelID);
-	chain.addOrderer(new Orderer(config.orderer.orderer_url));
-	for (var i = 0; i < config.peers.length; i++) {
-		chain.addPeer(new Peer(config.peers[i].peer_url));
+	let pem = null;
+	if('tlsCert' in config) {
+		pem = config.tlsCert.pem;
+	}
+
+	let orderer;
+	if(pem){
+		orderer = new Orderer(config.orderer.orderer_url,
+			{
+				pem: pem
+			});
+	} else {
+		orderer = new Orderer(config.orderer.orderer_url);
+	}
+
+	chain.addOrderer(orderer);
+
+	for (let i = 0; i < config.peers.length; i++) {
+		let peer;
+		if(pem){
+			peer = new Peer(config.peers[i].peer_url,
+				{
+					pem: pem
+				});
+		} else {
+			peer = new Peer(config.peers[i].peer_url);
+		}
+		chain.addPeer(peer);
 	}
 }
 
@@ -49,9 +75,10 @@ hfc.newDefaultKeyValueStore({
 	return helper.getSubmitter(client);
 }).then(
 	function(admin) {
-		logger.info('Successfully obtained enrolled user to perform query');
-		let adminUser = admin;
-		chain.initialize();
+		adminUser = admin;
+		logger.info('Successfully obtained enrolled user to deploy the chaincode');
+		return chain.initialize();
+	}).then(function () {
 		logger.info('Executing Query');
 		var targets = [];
 		for (var i = 0; i < config.peers.length; i++) {

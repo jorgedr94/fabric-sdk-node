@@ -60,17 +60,49 @@ init();
 
 function init() {
 	chain = client.newChain(config.channelID);
-	chain.addOrderer(new Orderer(config.orderer.orderer_url));
+	let pem = null;
+
+	if('tlsCert' in config) {
+		pem = config.tlsCert.pem;
+	}
+
+	let orderer;
+	if(pem){
+		orderer = new Orderer(config.orderer.orderer_url,
+			{
+				pem: pem
+			});
+	} else {
+		orderer = new Orderer(config.orderer.orderer_url);
+	}
+
+	chain.addOrderer(orderer);
 
 	for (let i = 0; i < config.peers.length; i++) {
-		let peer = new Peer(config.peers[i].peer_url);
+		let peer;
+		if(pem){
+			peer = new Peer(config.peers[i].peer_url,
+				{
+					pem: pem
+				});
+		} else {
+			peer = new Peer(config.peers[i].peer_url);
+		}
 		chain.addPeer(peer);
 		targets.push(peer);
 	}
 
 	for (let i = 0; i < config.events.length; i++) {
 		let eventhub = new EventHub();
-		eventhub.setPeerAddr(config.events[i].event_url);
+
+		if(pem){
+			eventhub.setPeerAddr(config.events[i].event_url,
+			{
+				pem: pem
+			});
+		} else {
+			eventhub.setPeerAddr(config.events[i].event_url);
+		}
 		eventhub.connect();
 		eventhubs.push(eventhub);
 	}
@@ -83,10 +115,10 @@ hfc.newDefaultKeyValueStore({
 	return helper.getSubmitter(client);
 }).then(
 	function(admin) {
-
-		logger.info('Successfully obtained enrolled user to deploy the chaincode');
 		adminUser = admin;
-		chain.initialize();
+		logger.info('Successfully obtained enrolled user to deploy the chaincode');
+		return chain.initialize();
+	}).then(function () {
 		logger.info('Executing Deploy');
 		let nonce = utils.getNonce();
 		let tx_id = chain.buildTransactionID(nonce, adminUser);
@@ -221,8 +253,8 @@ hfc.newDefaultKeyValueStore({
 }).catch(
 	function(err) {
 		console.log("Error detected..." + err);
-		eventhub.disconnect();
 		logger.error(err.stack ? err.stack : err);
+		process.exit();
 	}
 );
 
