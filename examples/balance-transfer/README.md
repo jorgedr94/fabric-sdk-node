@@ -29,7 +29,7 @@ A sample node-based app to demonstrate ***fabric-client*** & ***fabric-ca-client
 1ceaa835a589        hyperledger/fabric-peer:x86_64-1.0.0-alpha      "peer node start -..."   About a minute ago   Up 59 seconds       0.0.0.0:7051->7051/tcp, 0.0.0.0:7053->7053/tcp   peer0
 db4797c8403b        hyperledger/fabric-orderer:x86_64-1.0.0-alpha   "orderer"                About a minute ago   Up About a minute   0.0.0.0:7050->7050/tcp                           orderer0
 db3e4af348ed        hyperledger/fabric-ca:x86_64-1.0.0-alpha        "sh -c 'fabric-ca-..."   About a minute ago   Up About a minute   0.0.0.0:7054->7054/tcp                           ca_peerOrg1
-	```
+```
 
 1. Install npm dependencies locally to run example
 
