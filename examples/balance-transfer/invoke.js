@@ -35,11 +35,12 @@ var client = new hfc();
 var chain;
 var eventhub;
 var tx_id = null;
+var adminUser  = null;
 
 init();
 
 function init() {
-	chain = client.newChain(config.chainName);
+	chain = client.newChain(config.channelID);
 	chain.addOrderer(new Orderer(config.orderer.orderer_url));
 	eventhub = new EventHub();
 	eventhub.setPeerAddr(config.events[0].event_url);
@@ -57,10 +58,11 @@ hfc.newDefaultKeyValueStore({
 }).then(
 	function(admin) {
 		logger.info('Successfully obtained user to submit transaction');
-
+		adminUser = admin;
+		chain.initialize();
 		logger.info('Executing Invoke');
-		tx_id = helper.getTxId();
 		var nonce = utils.getNonce();
+		tx_id = chain.buildTransactionID(nonce, adminUser);
 		var args = helper.getArgs(config.invokeRequest.args);
 		// send proposal to endorser
 		var request = {

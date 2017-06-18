@@ -49,7 +49,7 @@ module.exports.getSubmitter = function(client) {
 					logger.info('Successfully enrolled user \'' + username + '\'');
 
 					member = new User(username, client);
-					return member.setEnrollment(enrollment.key, enrollment.certificate);
+					return member.setEnrollment(enrollment.key, enrollment.certificate, config.mspId);
 				}).then(() => {
 					return client.setUserContext(member);
 				}).then(() => {
@@ -83,7 +83,7 @@ module.exports.processProposal = function(tx_id, eventhub, chain, results, propo
 	}
 	if (all_good) {
 		if (proposalType == 'deploy') {
-			logger.info(util.format('Successfully sent Proposal and received ProposalResponse: Status - %s, message - "%s", metadata - "%s", endorsement signature: %s', proposalResponses[0].response.status, proposalResponses[0].response.message, proposalResponses[0].response.payload, proposalResponses[0].endorsement.signature));
+			logger.info(util.format('Successfully sent Proposal and received ProposalResponse: Status - %s, message - "%s", metadata - "%s"', proposalResponses[0].response.status, proposalResponses[0].response.message, proposalResponses[0].response.payload));
 		} else {
 			logger.info('Successfully obtained transaction endorsements.');
 		}

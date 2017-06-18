@@ -35,7 +35,7 @@ var chain;
 init();
 
 function init() {
-	chain = client.newChain(config.chainName);
+	chain = client.newChain(config.channelID);
 	chain.addOrderer(new Orderer(config.orderer.orderer_url));
 	for (var i = 0; i < config.peers.length; i++) {
 		chain.addPeer(new Peer(config.peers[i].peer_url));
@@ -50,20 +50,23 @@ hfc.newDefaultKeyValueStore({
 }).then(
 	function(admin) {
 		logger.info('Successfully obtained enrolled user to perform query');
-
+		let adminUser = admin;
+		chain.initialize();
 		logger.info('Executing Query');
 		var targets = [];
 		for (var i = 0; i < config.peers.length; i++) {
 			targets.push(config.peers[i]);
 		}
 		var args = helper.getArgs(config.queryRequest.args);
+		var nonce = utils.getNonce();
+		let tx_id = chain.buildTransactionID(nonce, adminUser);
 		//chaincode query request
 		var request = {
-			targets: targets,
 			chaincodeId: config.chaincodeID,
+			chaincodeVersion: config.chaincodeVersion,
 			chainId: config.channelID,
-			txId: utils.buildTransactionID(),
-			nonce: utils.getNonce(),
+			txId: tx_id,
+			nonce: nonce,
 			fcn: config.queryRequest.functionName,
 			args: args
 		};
@@ -71,9 +74,9 @@ hfc.newDefaultKeyValueStore({
 		return chain.queryByChaincode(request);
 	}
 ).then(
-	function(response_payloads) {
-		for (let i = 0; i < response_payloads.length; i++) {
-			logger.info('############### Query results after the move on PEER%j, User "b" now has  %j', i, response_payloads[i].toString('utf8'));
+	function(results) {
+		for (let i = 0; i < results.length; i++) {
+			logger.info('############### Query results after the move on PEER%j, User "b" now has  %j', i, results[i].toString('utf8'));
 		}
 	}
 ).catch(
