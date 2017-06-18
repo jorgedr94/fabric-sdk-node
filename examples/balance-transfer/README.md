@@ -40,14 +40,15 @@ A sample node-based app to demonstrate ***fabric-client*** & ***fabric-ca-client
 
 4. Invoke chaincode to change values
 
-`node invoke.js`
+	`node invoke.js`
 
-A successful query will have the following output:
-```
-[INFO] Helper - Successfully obtained transaction endorsements.
-[INFO] Helper - The chaincode transaction has been successfully committed
-[INFO] INVOKE - The chaincode transaction has been successfully committed
-```
+	A successful query will have the following output:
+	```
+	[INFO] Helper - Successfully obtained transaction endorsements.
+	[INFO] Helper - The chaincode transaction has been successfully committed
+	[INFO] INVOKE - The chaincode transaction has been successfully committed
+	```
+
 5. Query the chaincode again to verify values have changed
 
 	`node query.js`
