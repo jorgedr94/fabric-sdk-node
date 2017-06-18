@@ -42,7 +42,7 @@ A sample node-based app to demonstrate ***fabric-client*** & ***fabric-ca-client
 
 	`node invoke.js`
 
-	A successful query will have the following output:
+	A successful invocation will have the following output:
 	```
 	[INFO] Helper - Successfully obtained transaction endorsements.
 	[INFO] Helper - The chaincode transaction has been successfully committed
