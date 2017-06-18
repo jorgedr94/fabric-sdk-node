@@ -7,6 +7,9 @@
     "fabric-client example",
     "balance-transfer node sample"
   ],
+   "scripts": {
+    "deploy-hlf": "cd environment && cat hlfv1-alpha-install.sh | bash "
+  }, 
   "engines": {
     "node": ">=4.5.0",
     "npm": ">=2.15.9"
