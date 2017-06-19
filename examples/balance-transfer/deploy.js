@@ -52,9 +52,7 @@ process.on('exit', function() {
 
 
 
-if (!process.env.GOPATH){
-	process.env.GOPATH = config.goPath;
-}
+process.env.GOPATH = config.goPath;
 
 init();
 
